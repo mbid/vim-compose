@@ -52,13 +52,23 @@ function findBlockquoteStyle(inputBox) {
   el.setAttribute("contentEditable", false);
 
   const port = chrome.runtime.connect({name: "content"});
+  var intervalId;
 
-  port.onDisconnect.addListener((message) => {
+  function exit() {
+    port.disconnect();
+    clearTimeout(intervalID);
     el.setAttribute("contentEditable", true);
-  });
+  }
+
+  port.onDisconnect.addListener(exit);
+
+  intervalID = setInterval(() => {
+    if (!el.isConnected) {
+      exit();
+    }
+  }, 200);
 
   port.onMessage.addListener((message) => {
-    console.log(`Got message: ${message}`);
     for (const [type, value] of Object.entries(message)) {
       switch (type) {
         case "replaceAll":
@@ -69,6 +79,7 @@ function findBlockquoteStyle(inputBox) {
           break;
         default:
           console.error("Invalid message type:", type);
+          exit();
           break;
       }
     }
