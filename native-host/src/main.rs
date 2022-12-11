@@ -2,8 +2,9 @@ use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 use log::info;
 use serde::{Deserialize, Serialize};
 use simplelog::{LevelFilter, WriteLogger};
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::{stdin, stdout, Read, Write};
+use std::path::Path;
 use std::process::{exit, Command, Stdio};
 use std::thread::sleep;
 use std::time::Duration;
@@ -54,6 +55,57 @@ fn disconnect(pipe: &mut impl Write) {
     pipe.write_u32::<NativeEndian>(0).unwrap();
 }
 
+fn write_html_as_markdown(output: &Path, html: &str) {
+    let mut pandoc = Command::new("pandoc")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .arg("-")
+        .arg("--output")
+        .arg(output)
+        .arg("--from")
+        .arg("html")
+        .arg("--to")
+        .arg("gfm")
+        .spawn()
+        .unwrap();
+    pandoc
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(html.as_bytes())
+        .unwrap();
+
+    let status = pandoc.wait().unwrap();
+    assert!(status.success());
+}
+
+fn read_markdown_as_html(input: &Path) -> String {
+    let mut pandoc = Command::new("pandoc")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .arg(input)
+        .arg("--output")
+        .arg("-")
+        .arg("--from")
+        .arg("gfm")
+        .arg("--to")
+        .arg("html")
+        .spawn()
+        .unwrap();
+    let mut html = String::new();
+    pandoc
+        .stdout
+        .take()
+        .unwrap()
+        .read_to_string(&mut html)
+        .unwrap();
+    let status = pandoc.wait().unwrap();
+    assert!(status.success());
+    html
+}
+
 fn main() {
     WriteLogger::init(
         LevelFilter::Trace,
@@ -73,27 +125,33 @@ fn main() {
     };
 
     let tmp_dir = TempDir::new("mail").unwrap();
-    let file_path = tmp_dir.path().join("message.md");
-    fs::write(&file_path, &initial_content).unwrap();
+    let src_path = tmp_dir.path().join("message.md");
+
+    write_html_as_markdown(&src_path, &initial_content);
+
     let mut editor_child = Command::new("term")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .arg("--wait")
         .arg("--")
         .arg("vim")
-        .arg(&file_path)
+        .arg(&src_path)
         .spawn()
         .unwrap();
 
+    let mut last_html: Option<String> = None;
     loop {
-        sleep(Duration::from_secs(1));
-        let content = fs::read_to_string(&file_path).unwrap();
-        let message = HostMessage::ReplaceAll(content);
-        write_message(&message, &mut stdout().lock());
-
+        let html = read_markdown_as_html(&src_path);
+        if Some(&html) != last_html.as_ref() {
+            last_html = Some(html.clone());
+            let message = HostMessage::ReplaceAll(html);
+            write_message(&message, &mut stdout().lock());
+        }
         if let Some(_) = editor_child.try_wait().unwrap() {
             break;
         }
+        sleep(Duration::from_secs(1));
     }
     disconnect(&mut stdout().lock());
     info!("Exiting");

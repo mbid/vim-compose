@@ -1,19 +1,71 @@
-(function() {
-  const el = document.activeElement;
-  if (!el.contentEditable) {
+function flatten(el) {
+  if (!el.parentElement) {
     return;
   }
 
+  while (el.childNodes.length > 0) {
+    el.parentElement.insertBefore(el.childNodes[0], el);
+  }
+  el.remove();
+}
+
+
+function cleanMessage(inputBox) {
+  for (const el of inputBox.querySelectorAll('div.gmail_quote')) {
+    flatten(el);
+  }
+
+  for (const el of inputBox.querySelectorAll('div.gmail_attr')) {
+    flatten(el);
+  }
+
+  for (const el of inputBox.querySelectorAll('div')) {
+    if (el.parentNode) {
+      el.parentNode.insertBefore(document.createElement("br"), el.nextSibling);
+    }
+    flatten(el);
+  }
+
+  for (const el of inputBox.querySelectorAll('a[href^="mailto:"]')) {
+    flatten(el);
+  }
+}
+
+function findBlockquoteStyle(inputBox) {
+  for (const blockquote of inputBox.querySelectorAll('blockquote')) {
+    const style = blockquote.getAttribute('style');
+    if (style) {
+      return style;
+    }
+  }
+
+  return null;
+}
+
+(function() {
+  const el = document.activeElement;
+  if (!el.getAttribute('contentEditable') === true) {
+    return;
+  }
+  const blockquoteStyle = findBlockquoteStyle(el);
+  cleanMessage(el);
+  el.setAttribute("contentEditable", false);
+
   const port = chrome.runtime.connect({name: "content"});
 
-  port.postMessage({"begin": {initialContent: el.innerText, contentType: "Plain"}});
+  port.onDisconnect.addListener((message) => {
+    el.setAttribute("contentEditable", true);
+  });
 
   port.onMessage.addListener((message) => {
     console.log(`Got message: ${message}`);
     for (const [type, value] of Object.entries(message)) {
       switch (type) {
         case "replaceAll":
-          el.innerText = value;
+          el.innerHTML = value;
+          for (const blockquote of el.querySelectorAll('blockquote')) {
+            blockquote.setAttribute('style', blockquoteStyle);
+          }
           break;
         default:
           console.error("Invalid message type:", type);
@@ -21,4 +73,7 @@
       }
     }
   });
+
+  port.postMessage({"begin": {initialContent: el.innerHTML, contentType: "Plain"}});
+
 })();
