@@ -2,9 +2,8 @@ const hostName = "com.google.chrome.example.echo";
 const port = chrome.runtime.connectNative(hostName);
 
 port.onMessage.addListener((message) => {
-  date = message;
-  console.log(`Got date: ${date}`);
-  document.getElementById("date").innerText = date;
+  console.log(`Got message: ${message}`);
+  document.getElementById("date").innerText = message.date;
 });
 
 setInterval(() => {
