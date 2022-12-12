@@ -1,0 +1,9 @@
+{
+  "name": "com.mbid.vim.compose",
+  "description": "Vim Compose Extension Host",
+	"path": "\/home\/mbid\/projects\/vim-compose\/native-host\/target\/debug\/native-host",
+  "type": "stdio",
+  "allowed_origins": [
+		"chrome-extension://knldjmfmopnpolahpmmgbagdohdnhkik/"
+  ]
+}

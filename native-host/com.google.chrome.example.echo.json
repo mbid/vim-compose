@@ -1,9 +1,0 @@
-{
-  "name": "com.google.chrome.example.echo",
-  "description": "Chrome Native Messaging API Example Host",
-	"path": "\/home\/mbid\/projects\/mail-vim-ext\/native-host\/target\/debug\/native-host",
-  "type": "stdio",
-  "allowed_origins": [
-		"chrome-extension://knldjmfmopnpolahpmmgbagdohdnhkik/"
-  ]
-}

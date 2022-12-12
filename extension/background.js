@@ -23,7 +23,7 @@ function connectPorts(lhs, rhs) {
 chrome.runtime.onConnect.addListener(function(contentPort) {
   console.assert(contentPort.name === "content");
 
-  const nativeHost = "com.google.chrome.example.echo";
+  const nativeHost = "com.mbid.vim.compose";
   const nativePort = chrome.runtime.connectNative(nativeHost);
 
   connectPorts(contentPort, nativePort);

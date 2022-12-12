@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDcBHwzDvyBQ6bDppkIs9MP4ksKqCMyXQ/A52JivHZKh4YO/9vJsT3oaYhSpDCE9RPocOEQvwsHsFReW2nUEc6OLLyoCFFxIb7KkLGsmfakkut/fFdNJYh0xOTbSN8YvLWcqph09XAY2Y/f0AL7vfO1cuCqtkMt8hFrBGWxDdf9CQIDAQAB",
-  "name": "Hello Extensions",
-  "description": "Base Level Extension",
+  "name": "Vim Compose",
+  "description": "Compose email with vim ",
   "version": "1.0",
   "action": {
-    "default_icon": "hello_extensions.png"
+    "default_icon": "icon.png"
   },
   "background": {
     "service_worker": "background.js"
