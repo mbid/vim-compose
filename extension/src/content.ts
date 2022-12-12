@@ -84,8 +84,8 @@ function editWithVim(editable: HTMLElement) {
 }
 
 function domDistance(lhs: Element, rhs: Element): number | null {
-  const lhs_ancestors = new Map();
-  const rhs_ancestors = new Map();
+  let lhs_ancestors = new Map();
+  let rhs_ancestors = new Map();
 
   let lhs_tip: ParentNode | null = lhs;
   let rhs_tip: ParentNode | null = rhs;
@@ -95,7 +95,7 @@ function domDistance(lhs: Element, rhs: Element): number | null {
       return null;
     }
 
-    if (lhs_tip) {
+    if (lhs_tip != null) {
       const rhs_index = rhs_ancestors.get(lhs_tip);
       if (rhs_index != null) {
         return lhs_ancestors.size + rhs_index;
@@ -104,14 +104,8 @@ function domDistance(lhs: Element, rhs: Element): number | null {
       lhs_tip = lhs_tip.parentNode;
     }
 
-    if (rhs_tip) {
-      const lhs_index = lhs_ancestors.get(rhs_tip);
-      if (lhs_index != null) {
-        return rhs_ancestors.size + lhs_index;
-      }
-      rhs_ancestors.set(rhs_tip, rhs_ancestors.size);
-      rhs_tip = rhs_tip.parentNode;
-    }
+    [lhs_tip, rhs_tip] = [rhs_tip, lhs_tip];
+    [lhs_ancestors, rhs_ancestors] = [rhs_ancestors, lhs_ancestors];
   }
 }
 
