@@ -123,7 +123,6 @@ function prepareEdit(el: HTMLElement) {
         'div[role="button"][aria-label="Show trimmed content"]'
       ),
     ];
-    console.log(showTrimmedButtons);
 
     if (showTrimmedButtons.length > 0) {
       const domDists = showTrimmedButtons.map(
@@ -164,23 +163,19 @@ function prepareEdit(el: HTMLElement) {
 
 var alreadyEdited = false;
 function tryEdit(el: Element | null) {
-  console.log("tryEdit");
   if (!(el instanceof HTMLElement)) {
     return;
   }
 
   if (!isGmailComposeInput(el)) {
-    console.log("no compose");
     alreadyEdited = false;
     return;
   }
 
   if (alreadyEdited) {
-    console.log("already edited");
     return;
   }
 
-  console.log("editing");
   alreadyEdited = true;
   prepareEdit(el);
   editWithVim(el);
