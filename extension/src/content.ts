@@ -166,13 +166,16 @@ function edit(editable: HTMLElement): CancellablePromise<void> {
       port = protocol.connect();
 
       var contentType: protocol.ContentType | null = null;
+      var initialContent: string | null = null;
       if (
         editable instanceof HTMLInputElement ||
         editable instanceof HTMLTextAreaElement
       ) {
         contentType = protocol.ContentType.Plain;
+        initialContent = editable.value;
       } else if (editable.isContentEditable) {
         contentType = protocol.ContentType.Html;
+        initialContent = editable.innerHTML;
       } else {
         reject("Invalid edit element");
         return;
@@ -180,7 +183,7 @@ function edit(editable: HTMLElement): CancellablePromise<void> {
 
       const beginMessage: protocol.Client.Message = {
         kind: "begin",
-        initialContent: editable.innerHTML,
+        initialContent: initialContent,
         contentType: contentType,
       };
       port.postMessage(beginMessage);

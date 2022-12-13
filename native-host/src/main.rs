@@ -168,7 +168,7 @@ fn read_markdown_as_html(input: &Path) -> io::Result<String> {
     Ok(html)
 }
 
-fn handle_messages(src_path: PathBuf, exit: Sender<io::Result<()>>) -> io::Result<()> {
+fn handle_messages(tmp_dir: &Path, exit: Sender<io::Result<()>>) -> io::Result<()> {
     let stdin = &mut stdin().lock();
     let mut got_begin_message = false;
 
@@ -197,7 +197,8 @@ fn handle_messages(src_path: PathBuf, exit: Sender<io::Result<()>>) -> io::Resul
         };
 
         let ClientMessage::Begin {
-            initial_content, ..
+            initial_content,
+            content_type,
         } = message;
         info!("Received \"begin\" message");
         if got_begin_message {
@@ -207,7 +208,18 @@ fn handle_messages(src_path: PathBuf, exit: Sender<io::Result<()>>) -> io::Resul
             ));
         }
         got_begin_message = true;
-        write_html_as_markdown(&src_path, &initial_content)?;
+        let src_path = match content_type {
+            ContentType::Html => {
+                let src_path = tmp_dir.join("input");
+                write_html_as_markdown(&src_path, &initial_content)?;
+                src_path
+            }
+            ContentType::Plain => {
+                let src_path = tmp_dir.join("input.md");
+                fs::write(&src_path, &initial_content)?;
+                src_path
+            }
+        };
         let (mut child, child_pid) = spawn_editor(&src_path)?;
         editor_pid.set(Some(child_pid));
         spawn_thread(exit.clone(), move || {
@@ -215,10 +227,15 @@ fn handle_messages(src_path: PathBuf, exit: Sender<io::Result<()>>) -> io::Resul
             error!("Editor process exited");
             Ok(())
         });
+
+        {
+            let src_path = src_path.clone();
+            spawn_thread(exit.clone(), move || send_updates(&src_path, content_type));
+        }
     }
 }
 
-fn send_updates(src_path: &Path) -> io::Result<()> {
+fn send_updates(src_path: &Path, content_type: ContentType) -> io::Result<()> {
     let mut last_html: Option<String> = None;
     let mut inotify = Inotify::init()?;
     let mask = WatchMask::CLOSE_WRITE
@@ -231,7 +248,10 @@ fn send_updates(src_path: &Path) -> io::Result<()> {
     let mut buffer = [0; 1024];
     loop {
         info!("Checking for updates in source");
-        let html = read_markdown_as_html(src_path)?;
+        let html = match content_type {
+            ContentType::Html => read_markdown_as_html(src_path)?,
+            ContentType::Plain => fs::read_to_string(src_path)?,
+        };
         if Some(&html) != last_html.as_ref() {
             info!("Generated HTML changed, sending update");
             last_html = Some(html.clone());
@@ -269,18 +289,11 @@ fn main() -> io::Result<()> {
     let (sender, receiver) = channel::<io::Result<()>>();
 
     let tmp_dir = TempDir::new("mail")?;
-    let src_path = tmp_dir.path().join("message.md");
-    File::create(&src_path)?;
 
     {
-        let src_path = src_path.clone();
+        let tmp_dir: PathBuf = tmp_dir.path().into();
         let sender = sender.clone();
-        spawn_thread(sender.clone(), || handle_messages(src_path, sender));
-    }
-
-    {
-        let src_path = src_path.clone();
-        spawn_thread(sender.clone(), move || send_updates(&src_path));
+        spawn_thread(sender.clone(), move || handle_messages(&tmp_dir, sender));
     }
 
     let result = receiver.recv().unwrap();
