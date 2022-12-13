@@ -110,58 +110,106 @@ function prepareContentEditable(el: HTMLElement) {
   }
 }
 
-function editWithVim(editable: HTMLElement) {
-  console.assert(editable.isContentEditable);
-  const blockquoteStyle = findBlockquoteStyle(editable);
-  editable.setAttribute("contenteditable", false.toString());
-
-  const port = protocol.connect();
-  var timer: number | null = null;
-
-  function exit() {
-    port.disconnect();
-    if (timer != null) {
-      clearTimeout(timer);
-    }
-    editable.setAttribute("contenteditable", true.toString());
+// TODO: Make it so that cancel means that neither resolve or reject are
+// called, and that cancel is called at most once.
+type Executor<T> = (
+  resolve: (value: T | PromiseLike<T>) => void,
+  reject: (reason?: any) => void
+) => void;
+class CancellablePromise<T> extends Promise<T> {
+  constructor(executor: Executor<T>, cancel: () => void) {
+    super(executor);
+    this.cancelMethod = cancel;
   }
 
-  port.onDisconnect.addListener(exit);
+  public cancel() {
+    this.cancelMethod();
+  }
 
-  timer = window.setInterval(() => {
-    if (!editable.isConnected) {
-      exit();
+  // TODO: Should return a CancellablePromise.
+  public static async race<S>(ps: CancellablePromise<S>[]): Promise<S> {
+    try {
+      return await Promise.race(ps);
+    } finally {
+      for (const p of ps) {
+        p.cancel();
+      }
     }
-  }, 100);
+  }
 
-  port.onMessage.addListener((message) => {
-    if (!protocol.Host.validate(message)) {
-      console.error("Invalid message");
-      exit();
-      return;
-    }
-
-    switch (message.kind) {
-      case "replaceAll":
-        editable.innerHTML = message.content;
-        if (blockquoteStyle != null) {
-          for (const blockquote of editable.querySelectorAll("blockquote")) {
-            blockquote.setAttribute("style", blockquoteStyle);
-          }
-        }
-        break;
-    }
-  });
-
-  const beginMessage: protocol.Client.Message = {
-    kind: "begin",
-    initialContent: editable.innerHTML,
-    contentType: protocol.ContentType.Html,
-  };
-  port.postMessage(beginMessage);
+  private cancelMethod: () => void;
 }
 
-function tryEdit(el: Element | null) {
+function pollUntil(property: () => boolean): CancellablePromise<void> {
+  var timer: number | null = null;
+  return new CancellablePromise<void>(
+    (resolve) => {
+      timer = window.setInterval(() => {
+        if (property()) {
+          resolve();
+        }
+      }, 100);
+    },
+    () => {
+      if (timer != null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+    }
+  );
+}
+
+function edit(editable: HTMLElement): CancellablePromise<void> {
+  var port: Port | null;
+  return new CancellablePromise<void>(
+    (resolve, reject) => {
+      port = protocol.connect();
+
+      const beginMessage: protocol.Client.Message = {
+        kind: "begin",
+        initialContent: editable.innerHTML,
+        contentType: protocol.ContentType.Html,
+      };
+      port.postMessage(beginMessage);
+
+      port.onDisconnect.addListener(() => {
+        resolve();
+      });
+
+      port.onMessage.addListener((message) => {
+        if (!protocol.Host.validate(message)) {
+          reject("Invalid message");
+          return;
+        }
+
+        switch (message.kind) {
+          case "replaceAll":
+            editable.innerHTML = message.content;
+            break;
+        }
+      });
+    },
+    () => {
+      if (port != null) {
+        port.disconnect();
+      }
+    }
+  );
+}
+
+function disableContentEditable(el: HTMLElement): CancellablePromise<void> {
+  return new CancellablePromise<void>(
+    () => {
+      el.setAttribute("contenteditable", false.toString());
+      // We never resolve.
+    },
+    () => {
+      el.setAttribute("contenteditable", true.toString());
+    }
+  );
+}
+
+async function tryEdit(el: Element | null) {
   if (!(el instanceof HTMLElement)) {
     return;
   }
@@ -179,7 +227,12 @@ function tryEdit(el: Element | null) {
     prepareGmailComposeInput(el);
   }
   prepareContentEditable(el);
-  editWithVim(el);
+
+  CancellablePromise.race([
+    edit(el),
+    pollUntil(() => !el.isConnected),
+    disableContentEditable(el),
+  ]);
 }
 
 tryEdit(document.activeElement);
