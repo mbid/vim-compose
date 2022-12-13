@@ -155,22 +155,15 @@ function prepareEdit(el: HTMLElement) {
   }
 }
 
-var alreadyEdited = false;
 function tryEdit(el: Element | null) {
   if (!(el instanceof HTMLElement)) {
     return;
   }
 
   if (!isGmailComposeInput(el)) {
-    alreadyEdited = false;
     return;
   }
 
-  if (alreadyEdited) {
-    return;
-  }
-
-  alreadyEdited = true;
   prepareEdit(el);
   editWithVim(el);
 }
