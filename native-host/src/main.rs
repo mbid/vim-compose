@@ -83,6 +83,7 @@ enum ContentType {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+#[serde(tag = "kind")]
 enum ClientMessage {
     #[serde(rename_all = "camelCase")]
     Begin {
@@ -93,8 +94,9 @@ enum ClientMessage {
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
+#[serde(tag = "kind")]
 enum HostMessage {
-    ReplaceAll(String),
+    ReplaceAll { content: String },
 }
 
 fn read_message(pipe: &mut impl Read) -> io::Result<ClientMessage> {
@@ -233,7 +235,7 @@ fn send_updates(src_path: &Path) -> io::Result<()> {
         if Some(&html) != last_html.as_ref() {
             info!("Generated HTML changed, sending update");
             last_html = Some(html.clone());
-            let message = HostMessage::ReplaceAll(html);
+            let message = HostMessage::ReplaceAll { content: html };
             write_message(&message, &mut stdout().lock())?;
         }
         inotify.read_events_blocking(&mut buffer)?;

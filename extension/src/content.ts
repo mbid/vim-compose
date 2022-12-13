@@ -1,3 +1,5 @@
+import * as protocol from "./protocol";
+
 function flatten(el: Element) {
   if (!el.parentElement) {
     return;
@@ -113,7 +115,7 @@ function editWithVim(editable: HTMLElement) {
   const blockquoteStyle = findBlockquoteStyle(editable);
   editable.setAttribute("contenteditable", false.toString());
 
-  const port = chrome.runtime.connect({ name: "content" });
+  const port = protocol.connect();
   var timer: number | null = null;
 
   function exit() {
@@ -133,34 +135,30 @@ function editWithVim(editable: HTMLElement) {
   }, 100);
 
   port.onMessage.addListener((message) => {
-    const entries = Object.entries(message);
-    if (entries.length != 1) {
+    if (!protocol.Host.validate(message)) {
       console.error("Invalid message");
+      exit();
+      return;
     }
-    const [[type, value]] = entries;
-    switch (type) {
-      case "replaceAll":
-        if (typeof value !== "string") {
-          console.error("Invalid replaceAll message");
-          return;
-        }
 
-        editable.innerHTML = value;
+    switch (message.kind) {
+      case "replaceAll":
+        editable.innerHTML = message.content;
         if (blockquoteStyle != null) {
           for (const blockquote of editable.querySelectorAll("blockquote")) {
             blockquote.setAttribute("style", blockquoteStyle);
           }
         }
         break;
-      default:
-        console.error("Invalid message type:", type);
-        return;
     }
   });
 
-  port.postMessage({
-    begin: { initialContent: editable.innerHTML, contentType: "Plain" },
-  });
+  const beginMessage: protocol.Client.Message = {
+    kind: "begin",
+    initialContent: editable.innerHTML,
+    contentType: protocol.ContentType.Html,
+  };
+  port.postMessage(beginMessage);
 }
 
 function tryEdit(el: Element | null) {
