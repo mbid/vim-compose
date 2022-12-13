@@ -252,6 +252,20 @@ async function tryEdit(el: Element | null) {
     return;
   }
 
+  if (el.isContentEditable === true) {
+    if (isGmailComposeInput(el)) {
+      prepareGmailComposeInput(el);
+    }
+    prepareContentEditable(el);
+
+    await CancellablePromise.race([
+      edit(el),
+      pollUntil(() => !el.isConnected),
+      disableContentEditable(el),
+    ]);
+    return;
+  }
+
   if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
     await CancellablePromise.race([
       edit(el),
@@ -260,21 +274,6 @@ async function tryEdit(el: Element | null) {
     ]);
     return;
   }
-
-  if (el.isContentEditable !== true) {
-    return false;
-  }
-
-  if (isGmailComposeInput(el)) {
-    prepareGmailComposeInput(el);
-  }
-  prepareContentEditable(el);
-
-  await CancellablePromise.race([
-    edit(el),
-    pollUntil(() => !el.isConnected),
-    disableContentEditable(el),
-  ]);
 }
 
 tryEdit(document.activeElement);
