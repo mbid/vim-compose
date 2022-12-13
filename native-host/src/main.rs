@@ -210,12 +210,12 @@ fn handle_messages(tmp_dir: &Path, exit: Sender<io::Result<()>>) -> io::Result<(
         got_begin_message = true;
         let src_path = match content_type {
             ContentType::Html => {
-                let src_path = tmp_dir.join("input");
+                let src_path = tmp_dir.join("input.md");
                 write_html_as_markdown(&src_path, &initial_content)?;
                 src_path
             }
             ContentType::Plain => {
-                let src_path = tmp_dir.join("input.md");
+                let src_path = tmp_dir.join("input");
                 fs::write(&src_path, &initial_content)?;
                 src_path
             }
