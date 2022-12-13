@@ -14,5 +14,11 @@
   "background": {
     "service_worker": "background.js"
   },
+  "commands": {
+    "inject-script": {
+      "suggested_key": "Ctrl+Shift+E",
+      "description": "Compose mail in vim"
+    }
+  },
   "permissions": ["nativeMessaging", "activeTab", "scripting"]
 }

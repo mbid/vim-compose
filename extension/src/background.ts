@@ -1,14 +1,23 @@
 import Port = chrome.runtime.Port;
 import Tab = chrome.tabs.Tab;
 
-chrome.action.onClicked.addListener((tab: Tab) => {
-  if (tab.id == null) {
+function inject(tab: Tab | null) {
+  if (tab == null || tab.id == null) {
     return;
   }
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
     files: ["content.js"],
   });
+}
+
+chrome.action.onClicked.addListener(inject);
+
+chrome.commands.onCommand.addListener((command: string, tab: Tab | null) => {
+  if (command !== "inject-script") {
+    return;
+  }
+  inject(tab);
 });
 
 function connectPorts(lhs: Port, rhs: Port) {
