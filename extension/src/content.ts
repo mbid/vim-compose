@@ -165,10 +165,23 @@ function edit(editable: HTMLElement): CancellablePromise<void> {
     (resolve, reject) => {
       port = protocol.connect();
 
+      var contentType: protocol.ContentType | null = null;
+      if (
+        editable instanceof HTMLInputElement ||
+        editable instanceof HTMLTextAreaElement
+      ) {
+        contentType = protocol.ContentType.Plain;
+      } else if (editable.isContentEditable) {
+        contentType = protocol.ContentType.Html;
+      } else {
+        reject("Invalid edit element");
+        return;
+      }
+
       const beginMessage: protocol.Client.Message = {
         kind: "begin",
         initialContent: editable.innerHTML,
-        contentType: protocol.ContentType.Html,
+        contentType: contentType,
       };
       port.postMessage(beginMessage);
 
@@ -184,7 +197,15 @@ function edit(editable: HTMLElement): CancellablePromise<void> {
 
         switch (message.kind) {
           case "replaceAll":
-            editable.innerHTML = message.content;
+            switch (contentType) {
+              case protocol.ContentType.Html:
+                editable.innerHTML = message.content;
+                break;
+              case protocol.ContentType.Plain:
+                (editable as HTMLElement & { value: string }).value =
+                  message.content;
+                break;
+            }
             break;
         }
       });
@@ -201,10 +222,24 @@ function disableContentEditable(el: HTMLElement): CancellablePromise<void> {
   return new CancellablePromise<void>(
     () => {
       el.setAttribute("contenteditable", false.toString());
-      // We never resolve.
+      // We intentionally never resolve.
     },
     () => {
       el.setAttribute("contenteditable", true.toString());
+    }
+  );
+}
+
+function disableInput(
+  el: HTMLInputElement | HTMLTextAreaElement
+): CancellablePromise<void> {
+  return new CancellablePromise<void>(
+    () => {
+      el.setAttribute("readonly", true.toString());
+      // We intentionally never resolve.
+    },
+    () => {
+      el.removeAttribute("readonly");
     }
   );
 }
@@ -215,7 +250,11 @@ async function tryEdit(el: Element | null) {
   }
 
   if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-    console.error("TODO");
+    await CancellablePromise.race([
+      edit(el),
+      pollUntil(() => !el.isConnected),
+      disableInput(el),
+    ]);
     return;
   }
 
@@ -228,7 +267,7 @@ async function tryEdit(el: Element | null) {
   }
   prepareContentEditable(el);
 
-  CancellablePromise.race([
+  await CancellablePromise.race([
     edit(el),
     pollUntil(() => !el.isConnected),
     disableContentEditable(el),
