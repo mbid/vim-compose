@@ -1,0 +1,45 @@
+#!/bin/sh
+
+set -e
+
+repo=$(dirname $0)
+cd "$repo/native-host"
+
+if ! which pandoc > /dev/null; then
+  echo "Error: \"pandoc\" is not installed"
+	exit 1
+fi
+
+if ! cargo build --release; then
+	echo "Error: Native host failed to compile" 2>&1
+	exit 1
+fi
+
+bin_dir="$HOME/.local/bin"
+bin="$bin_dir/vim-compose-native-host"
+
+mkdir -p "$bin_dir"
+cp target/release/native-host "$bin"
+
+manifest_name="com.mbid.vim.compose.json"
+
+escaped_bin="$(echo $bin | sed 's|/|\\/|g')"
+manifest_content="$(cat "$manifest_name" | sed s/PATH/$escaped_bin/)"
+
+chromium_config="$HOME/.config/chromium"
+chrome_config="$HOME/.config/google-chrome"
+
+if ! [ -d "$chromium_config" ] & ! [ -d "$chrome_config" ]; then
+  echo "Error: Could not find chrome or chromium profile"
+	echo "Neither \"$chromium_config\" nor \"$chrome_config\" exist"
+	exit 1
+fi
+
+if [ -d "$chromium_config" ]; then
+  mkdir -p "$chromium_config/NativeMessagingHosts"
+  echo "$manifest_content" > "$chromium_config/NativeMessagingHosts/$manifest_name"
+fi
+if [ -d "$chrome_config" ]; then
+  mkdir -p "$chrome_config/NativeMessagingHosts"
+  echo "$manifest_content" > "$chrome_config/NativeMessagingHosts/$manifest_name"
+fi
