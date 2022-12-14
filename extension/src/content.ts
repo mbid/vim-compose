@@ -137,7 +137,56 @@ class CancellablePromise<T> extends Promise<T> {
     }
   }
 
+  public static never<S>(): CancellablePromise<S> {
+    return new CancellablePromise<S>(
+      () => {},
+      () => {}
+    );
+  }
+
   private cancelMethod: () => void;
+}
+
+function preserveGmailBlockquoteStyle(
+  editable: HTMLElement
+): CancellablePromise<void> {
+  const blockquote = editable.querySelector("blockquote");
+  if (blockquote == null) {
+    return CancellablePromise.never();
+  }
+
+  const style = blockquote.getAttribute("style");
+  if (style == null) {
+    return CancellablePromise.never();
+  }
+  const blockquoteStyle: string = style;
+
+  function onMutation(mutations: MutationRecord[]) {
+    for (const mutation of mutations) {
+      for (const addedNode of mutation.addedNodes) {
+        if (addedNode instanceof HTMLQuoteElement) {
+          addedNode.setAttribute("style", blockquoteStyle);
+        }
+
+        if (addedNode instanceof Element) {
+          for (const nestedBlockquote of addedNode.querySelectorAll(
+            "blockquote"
+          )) {
+            nestedBlockquote.setAttribute("style", blockquoteStyle);
+          }
+        }
+      }
+    }
+  }
+
+  const mutationObserver = new MutationObserver(onMutation);
+  mutationObserver.observe(editable, { subtree: true, childList: true });
+  return new CancellablePromise<void>(
+    () => {},
+    () => {
+      mutationObserver.disconnect();
+    }
+  );
 }
 
 function pollUntil(property: () => boolean): CancellablePromise<void> {
@@ -253,16 +302,21 @@ async function tryEdit(el: Element | null) {
   }
 
   if (el.isContentEditable === true) {
+    const procs: CancellablePromise<void>[] = [];
     if (isGmailComposeInput(el)) {
       prepareGmailComposeInput(el);
+      procs.push(preserveGmailBlockquoteStyle(el));
     }
     prepareContentEditable(el);
 
-    await CancellablePromise.race([
-      edit(el),
-      pollUntil(() => !el.isConnected),
-      disableContentEditable(el),
-    ]);
+    procs.push(
+      ...[
+        edit(el),
+        pollUntil(() => !el.isConnected),
+        disableContentEditable(el),
+      ]
+    );
+    await CancellablePromise.race(procs);
     return;
   }
 
