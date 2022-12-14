@@ -147,32 +147,40 @@ class CancellablePromise<T> extends Promise<T> {
   private cancelMethod: () => void;
 }
 
-function preserveGmailBlockquoteStyle(
-  editable: HTMLElement
-): CancellablePromise<void> {
+function findGmailBlockquoteStyle(editable: HTMLElement): string {
+  const def =
+    "margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex";
+
   const blockquote = editable.querySelector("blockquote");
   if (blockquote == null) {
-    return CancellablePromise.never();
+    return def;
   }
 
   const style = blockquote.getAttribute("style");
   if (style == null) {
-    return CancellablePromise.never();
+    return def;
   }
-  const blockquoteStyle: string = style;
+
+  return style;
+}
+
+function preserveGmailBlockquoteStyle(
+  editable: HTMLElement
+): CancellablePromise<void> {
+  const style: string = findGmailBlockquoteStyle(editable);
 
   function onMutation(mutations: MutationRecord[]) {
     for (const mutation of mutations) {
       for (const addedNode of mutation.addedNodes) {
         if (addedNode instanceof HTMLQuoteElement) {
-          addedNode.setAttribute("style", blockquoteStyle);
+          addedNode.setAttribute("style", style);
         }
 
         if (addedNode instanceof Element) {
           for (const nestedBlockquote of addedNode.querySelectorAll(
             "blockquote"
           )) {
-            nestedBlockquote.setAttribute("style", blockquoteStyle);
+            nestedBlockquote.setAttribute("style", style);
           }
         }
       }
