@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDcBHwzDvyBQ6bDppkIs9MP4ksKqCMyXQ/A52JivHZKh4YO/9vJsT3oaYhSpDCE9RPocOEQvwsHsFReW2nUEc6OLLyoCFFxIb7KkLGsmfakkut/fFdNJYh0xOTbSN8YvLWcqph09XAY2Y/f0AL7vfO1cuCqtkMt8hFrBGWxDdf9CQIDAQAB",
   "name": "Vim Compose",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxHW+LGAt9lZqtX//i4fQ32WNYkIGKaiHahIC8My1WOEoJ5k0FEsyJjk2KmWBGb4q26HnLPlKD8FUw89CmHvTyzEGIZZvG/Bh+v8d2qE4/BY2AOXhBMlWbk5eWCdgPETJKko/JjbyP4jti7Js7wGlwW5vQ8W4pz2rJoMjWWis8Ck0pzgrjUolskahazNiDj+W8361OPp0MeUC6vExiDYKZDdmnxpUiBFJk14M8cPTadWkU57qNCA31+nQLId2F8R/U4vzuuKVGUFi2Xkvwf7HZwpJw2XD0d1C0wbvUxF/nKL4hYIzEjplOVf0N9EyKkobVYeE65LHxUNlMc3NDx0ebwIDAQAB",
   "description": "Compose email with vim",
   "version": "0.0.1",
   "icons": {
