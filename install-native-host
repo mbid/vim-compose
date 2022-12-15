@@ -21,15 +21,16 @@ bin="$bin_dir/vim-compose-native-host"
 manifest_name="com.mbid.vim.compose.json"
 
 escaped_bin="$(echo $bin | sed 's|/|\\/|g')"
-manifest_content="$(cat "$manifest_name" | sed s/PATH/$escaped_bin/)"
+manifest_content_gecko="$(cat "$manifest_name.gecko" | sed s/PATH/$escaped_bin/)"
+manifest_content_chrome="$(cat "$manifest_name.chrome" | sed s/PATH/$escaped_bin/)"
 
 chromium_config="$HOME/.config/chromium"
-chrome_config="$HOME/.config/google-chrome"
+google_chrome_config="$HOME/.config/google-chrome"
 firefox_config="$HOME/.mozilla"
 
-if ! [ -d "$chromium_config" ] & ! [ -d "$chrome_config" ] & ! [ -d "$firefox_config" ]; then
-  echo "Error: Could not find chrome or chromium profile" 2>&1
-  echo "None of \"$chromium_config\", \"$chrome_config\" or \"$firefox_config\" exist" 2>&1
+if ! [ -d "$chromium_config" ] & ! [ -d "$google_chrome_config" ] & ! [ -d "$firefox_config" ]; then
+  echo "Error: Could not find google-chrome or chromium profile" 2>&1
+  echo "None of \"$chromium_config\", \"$google_chrome_config\" or \"$firefox_config\" exist" 2>&1
   exit 1
 fi
 
@@ -38,18 +39,19 @@ echo "Installing native host to $bin_dir"
 cp target/release/native-host "$bin"
 
 install_manifest() {
-  dir="$1"
+	content="$1"
+  dir="$2"
   echo "Installing native host manifest to $dir"
 	mkdir -p "$dir"
-  echo "$manifest_content" > "$dir/$manifest_name"
+  echo "$content" > "$dir/$manifest_name"
 }
 
 if [ -d "$chromium_config" ]; then
-	install_manifest "$chromium_config/NativeMessagingHosts"
+	install_manifest "$manifest_content_chrome" "$chromium_config/NativeMessagingHosts"
 fi
 if [ -d "$chrome_config" ]; then
-	install_manifest "$chrome_config/NativeMessagingHosts"
+	install_manifest "$manifest_content_chrome" "$google_chrome_config/NativeMessagingHosts"
 fi
 if [ -d "$firefox_config" ]; then
-	install_manifest "$firefox_config/native-messaging-hosts"
+	install_manifest "$manifest_content_gecko" "$firefox_config/native-messaging-hosts"
 fi

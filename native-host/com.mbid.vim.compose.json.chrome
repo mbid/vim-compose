@@ -3,9 +3,6 @@
     "description": "Vim Compose Extension Host",
     "path": "PATH",
     "type": "stdio",
-    "allowed_extensions": [
-        "{ee2bb3f2-4644-4059-807e-46fda31901c4}"
-    ],
     "allowed_origins": [
         "chrome-extension://lafooengjljmipillledmadfcpannkbc/"
     ]
