@@ -81,11 +81,12 @@ function prepareGmailComposeInput(el: HTMLElement) {
     }
   }
 
-  // Just use the plain email instead of link in lines before quotes such as this one:
+  // Just use the plain email instead of links. Useful so that lines such as
+  // this one aren't obfuscated in markdown source:
   //
   //   On Sun, Dec 11, 2022 at 7:00 PM Martin Bidlingmaier
   //   <martin.bidlingmaier@gmail.com> wrote:
-  for (const a of el.querySelectorAll('div.gmail_attr a[href^="mailto:"]')) {
+  for (const a of el.querySelectorAll('a[href^="mailto:"]')) {
     flatten(a);
   }
 
