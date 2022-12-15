@@ -292,7 +292,7 @@ fn main() -> io::Result<()> {
 
     let (sender, receiver) = channel::<io::Result<()>>();
 
-    let tmp_dir = TempDir::new("mail")?;
+    let tmp_dir = TempDir::new("vim-compose")?;
 
     {
         let tmp_dir: PathBuf = tmp_dir.path().into();
