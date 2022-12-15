@@ -31,20 +31,23 @@ chrome_config="$HOME/.config/google-chrome"
 firefox_config="$HOME/.mozilla"
 
 if ! [ -d "$chromium_config" ] & ! [ -d "$chrome_config" ] & ! [ -d "$firefox_config" ]; then
-  echo "Error: Could not find chrome or chromium profile"
-  echo "None of \"$chromium_config\", \"$chrome_config\" or \"$firefox_config\" exist"
+  echo "Error: Could not find chrome or chromium profile" 2>&1
+  echo "None of \"$chromium_config\", \"$chrome_config\" or \"$firefox_config\" exist" 2>&1
   exit 1
 fi
 
 if [ -d "$chromium_config" ]; then
+  echo "Installing manifest to $chromium_config"
   mkdir -p "$chromium_config/NativeMessagingHosts"
   echo "$manifest_content" > "$chromium_config/NativeMessagingHosts/$manifest_name"
 fi
 if [ -d "$chrome_config" ]; then
+  echo "Installing manifest to $chrome_config"
   mkdir -p "$chrome_config/NativeMessagingHosts"
   echo "$manifest_content" > "$chrome_config/NativeMessagingHosts/$manifest_name"
 fi
 if [ -d "$firefox_config" ]; then
+  echo "Installing manifest to $firefox_config"
   mkdir -p "$firefox_config/native-messaging-hosts"
   echo "$manifest_content" > "$firefox_config/native-messaging-hosts/$manifest_name"
 fi
