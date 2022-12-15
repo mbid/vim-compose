@@ -45,8 +45,6 @@ function evaluateBrowserSpecificSettings(browser, manifestValue, isTop = true) {
       ...result,
       ...browserValue,
     };
-
-    console.error("123", result);
   }
   return result;
 }

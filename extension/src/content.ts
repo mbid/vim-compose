@@ -338,5 +338,4 @@ async function tryEdit(el: Element | null) {
   }
 }
 
-console.log("Trying to edit");
 tryEdit(document.activeElement);

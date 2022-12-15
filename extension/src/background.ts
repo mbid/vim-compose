@@ -5,7 +5,6 @@ function inject(tab: Tab | null) {
   if (tab == null || tab.id == null) {
     return;
   }
-  console.error("injecting");
   chrome.scripting.executeScript({
     target: { tabId: tab.id, allFrames: true },
     files: ["content.js"],

@@ -18,9 +18,6 @@ fi
 bin_dir="$HOME/.local/bin"
 bin="$bin_dir/vim-compose-native-host"
 
-mkdir -p "$bin_dir"
-cp target/release/native-host "$bin"
-
 manifest_name="com.mbid.vim.compose.json"
 
 escaped_bin="$(echo $bin | sed 's|/|\\/|g')"
@@ -36,18 +33,23 @@ if ! [ -d "$chromium_config" ] & ! [ -d "$chrome_config" ] & ! [ -d "$firefox_co
   exit 1
 fi
 
+mkdir -p "$bin_dir"
+echo "Installing native host to $bin_dir"
+cp target/release/native-host "$bin"
+
+install_manifest() {
+  dir="$1"
+  echo "Installing native host manifest to $dir"
+	mkdir -p "$dir"
+  echo "$manifest_content" > "$dir/$manifest_name"
+}
+
 if [ -d "$chromium_config" ]; then
-  echo "Installing manifest to $chromium_config"
-  mkdir -p "$chromium_config/NativeMessagingHosts"
-  echo "$manifest_content" > "$chromium_config/NativeMessagingHosts/$manifest_name"
+	install_manifest "$chromium_config/NativeMessagingHosts"
 fi
 if [ -d "$chrome_config" ]; then
-  echo "Installing manifest to $chrome_config"
-  mkdir -p "$chrome_config/NativeMessagingHosts"
-  echo "$manifest_content" > "$chrome_config/NativeMessagingHosts/$manifest_name"
+	install_manifest "$chrome_config/NativeMessagingHosts"
 fi
 if [ -d "$firefox_config" ]; then
-  echo "Installing manifest to $firefox_config"
-  mkdir -p "$firefox_config/native-messaging-hosts"
-  echo "$manifest_content" > "$firefox_config/native-messaging-hosts/$manifest_name"
+	install_manifest "$firefox_config/native-messaging-hosts"
 fi
