@@ -29,7 +29,6 @@ function connectPorts(lhs: Port, rhs: Port) {
 }
 
 chrome.runtime.onConnect.addListener((contentPort: Port) => {
-  console.log("onConnect");
   console.assert(contentPort.name === "content");
 
   const nativeHost = "com.mbid.vim.compose";
