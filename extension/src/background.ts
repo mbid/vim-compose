@@ -14,13 +14,6 @@ function inject(tab: Tab | null) {
 
 chrome.action.onClicked.addListener(inject);
 
-chrome.commands.onCommand.addListener((command: string, tab: Tab | null) => {
-  if (command !== "inject-script") {
-    return;
-  }
-  inject(tab);
-});
-
 function connectPorts(lhs: Port, rhs: Port) {
   function oneWay(from: Port, to: Port) {
     from.onMessage.addListener((message) => {

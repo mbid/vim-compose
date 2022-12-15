@@ -19,8 +19,11 @@
     "scripts": ["background.js"]
   },
   "commands": {
-    "inject-script": {
-      "description": "Compose mail in vim"
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Space"
+      },
+      "description": "Edit in vim"
     }
   },
   "permissions": ["nativeMessaging", "activeTab", "scripting"]
