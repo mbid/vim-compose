@@ -134,7 +134,9 @@ fn write_html_as_markdown(output: &Path, html: &str) -> io::Result<()> {
         .arg("--to")
         .arg("gfm")
         .spawn()?;
-    pandoc.stdin.take().unwrap().write_all(html.as_bytes())?;
+
+    let sanitized_html: ammonia::Document = ammonia::Builder::new().clean(html);
+    sanitized_html.write_to(pandoc.stdin.take().unwrap())?;
 
     let status = pandoc.wait()?;
     if !status.success() {
@@ -156,13 +158,13 @@ fn read_markdown_as_html(input: &Path) -> io::Result<String> {
         .arg("--to")
         .arg("html")
         .spawn()?;
-    let mut html = String::new();
-    pandoc.stdout.take().unwrap().read_to_string(&mut html)?;
+    let html: ammonia::Document =
+        ammonia::Builder::new().clean_from_reader(pandoc.stdout.take().unwrap())?;
     let status = pandoc.wait()?;
     if !status.success() {
         eprintln!("pandoc exited with status {status}");
     }
-    Ok(html)
+    Ok(html.to_string())
 }
 
 fn handle_messages(tmp_dir: &Path, exit: Sender<io::Result<()>>) -> io::Result<()> {

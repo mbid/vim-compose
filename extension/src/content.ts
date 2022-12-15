@@ -259,7 +259,20 @@ function edit(editable: HTMLElement): CancellablePromise<void> {
           case "replaceAll":
             switch (contentType) {
               case protocol.ContentType.Html:
-                editable.innerHTML = message.content;
+                // The HTML we get here should have been sanitized by the
+                // native host already, so assigning to innerHTML is OK.
+                // Nevertheless, we use setHTML if possible, which also
+                // sanitizes.
+                // As of this writing, firefox only supports setHTML as an
+                // experimental feature, not by default.
+                if (
+                  "setHTML" in editable &&
+                  typeof editable.setHTML === "function"
+                ) {
+                  editable.setHTML(message.content);
+                } else {
+                  editable.innerHTML = message.content;
+                }
                 break;
               case protocol.ContentType.Plain:
                 (editable as HTMLElement & { value: string }).value =
