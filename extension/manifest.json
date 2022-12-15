@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Vim Compose",
+  "description": "Compose email with vim",
+  "version": "0.0.1",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{ee2bb3f2-4644-4059-807e-46fda31901c4}"
+    },
+    "chrome": {
+      "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxHW+LGAt9lZqtX//i4fQ32WNYkIGKaiHahIC8My1WOEoJ5k0FEsyJjk2KmWBGb4q26HnLPlKD8FUw89CmHvTyzEGIZZvG/Bh+v8d2qE4/BY2AOXhBMlWbk5eWCdgPETJKko/JjbyP4jti7Js7wGlwW5vQ8W4pz2rJoMjWWis8Ck0pzgrjUolskahazNiDj+W8361OPp0MeUC6vExiDYKZDdmnxpUiBFJk14M8cPTadWkU57qNCA31+nQLId2F8R/U4vzuuKVGUFi2Xkvwf7HZwpJw2XD0d1C0wbvUxF/nKL4hYIzEjplOVf0N9EyKkobVYeE65LHxUNlMc3NDx0ebwIDAQAB"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "action": {},
+  "background": {
+    "browser_specific_settings": {
+      "gecko": {
+        "scripts": ["background.js"]
+      },
+      "chrome": {
+        "service_worker": "background.js"
+      }
+    }
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Space"
+      },
+      "description": "Edit in vim"
+    }
+  },
+  "permissions": ["nativeMessaging", "activeTab", "scripting"]
+}
