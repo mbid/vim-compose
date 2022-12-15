@@ -7,12 +7,12 @@ cd "$repo/native-host"
 
 if ! which pandoc > /dev/null; then
   echo "Error: \"pandoc\" is not installed"
-	exit 1
+  exit 1
 fi
 
 if ! cargo build --release; then
-	echo "Error: Native host failed to compile" 2>&1
-	exit 1
+  echo "Error: Native host failed to compile" 2>&1
+  exit 1
 fi
 
 bin_dir="$HOME/.local/bin"
@@ -28,11 +28,12 @@ manifest_content="$(cat "$manifest_name" | sed s/PATH/$escaped_bin/)"
 
 chromium_config="$HOME/.config/chromium"
 chrome_config="$HOME/.config/google-chrome"
+firefox_config="$HOME/.mozilla"
 
-if ! [ -d "$chromium_config" ] & ! [ -d "$chrome_config" ]; then
+if ! [ -d "$chromium_config" ] & ! [ -d "$chrome_config" ] & ! [ -d "$firefox_config" ]; then
   echo "Error: Could not find chrome or chromium profile"
-	echo "Neither \"$chromium_config\" nor \"$chrome_config\" exist"
-	exit 1
+  echo "None of \"$chromium_config\", \"$chrome_config\" or \"$firefox_config\" exist"
+  exit 1
 fi
 
 if [ -d "$chromium_config" ]; then
@@ -42,4 +43,8 @@ fi
 if [ -d "$chrome_config" ]; then
   mkdir -p "$chrome_config/NativeMessagingHosts"
   echo "$manifest_content" > "$chrome_config/NativeMessagingHosts/$manifest_name"
+fi
+if [ -d "$firefox_config" ]; then
+  mkdir -p "$firefox_config/native-messaging-hosts"
+  echo "$manifest_content" > "$firefox_config/native-messaging-hosts/$manifest_name"
 fi
