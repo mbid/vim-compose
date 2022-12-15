@@ -1,12 +1,15 @@
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 use indoc::formatdoc;
 use inotify::{Inotify, WatchMask};
+use log::{error, info, warn};
 use nix::sys::signal::{kill, Signal};
 use nix::unistd::Pid;
 use scopeguard::defer;
 use serde::{Deserialize, Serialize};
+use simplelog::{LevelFilter, WriteLogger};
 use std::cell::Cell;
 use std::fs;
+use std::fs::File;
 use std::io::{self, stdin, stdout, Read, Write};
 use std::marker::Send;
 use std::path::{Path, PathBuf};
@@ -125,6 +128,7 @@ fn write_html_as_markdown(output: &Path, html: &str) -> io::Result<()> {
     let mut pandoc = Command::new("pandoc")
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .arg("-")
         .arg("--sandbox")
         .arg("--output")
@@ -140,7 +144,7 @@ fn write_html_as_markdown(output: &Path, html: &str) -> io::Result<()> {
 
     let status = pandoc.wait()?;
     if !status.success() {
-        eprintln!("pandoc exited with status {status}");
+        warn!("pandoc exited with status {status}");
     }
     Ok(())
 }
@@ -149,6 +153,7 @@ fn read_markdown_as_html(input: &Path) -> io::Result<String> {
     let mut pandoc = Command::new("pandoc")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
+        .stderr(Stdio::null())
         .arg(input)
         .arg("--sandbox")
         .arg("--output")
@@ -162,7 +167,7 @@ fn read_markdown_as_html(input: &Path) -> io::Result<String> {
         ammonia::Builder::new().clean_from_reader(pandoc.stdout.take().unwrap())?;
     let status = pandoc.wait()?;
     if !status.success() {
-        eprintln!("pandoc exited with status {status}");
+        warn!("pandoc exited with status {status}");
     }
     Ok(html.to_string())
 }
@@ -176,8 +181,9 @@ fn handle_messages(tmp_dir: &Path, exit: Sender<io::Result<()>>) -> io::Result<(
     let editor_pid: Cell<Option<Pid>> = Cell::new(None);
     defer! {
         if let Some(editor_pid) = editor_pid.get() {
+            info!("Killing editor process {editor_pid}");
             if kill(editor_pid, Signal::SIGTERM).is_err() {
-                eprintln!("Could not kill editor");
+                error!("Could not kill editor");
             }
         }
     };
@@ -187,6 +193,7 @@ fn handle_messages(tmp_dir: &Path, exit: Sender<io::Result<()>>) -> io::Result<(
             Ok(message) => message,
             Err(err) => {
                 if err.kind() == io::ErrorKind::UnexpectedEof {
+                    info!("Stdin was closed, exiting");
                     return Ok(());
                 }
                 return Err(err);
@@ -197,6 +204,7 @@ fn handle_messages(tmp_dir: &Path, exit: Sender<io::Result<()>>) -> io::Result<(
             initial_content,
             content_type,
         } = message;
+        info!("Received \"begin\" message");
         if got_begin_message {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
@@ -220,6 +228,7 @@ fn handle_messages(tmp_dir: &Path, exit: Sender<io::Result<()>>) -> io::Result<(
         editor_pid.set(Some(child_pid));
         spawn_thread(exit.clone(), move || {
             child.wait()?;
+            error!("Editor process exited");
             Ok(())
         });
 
@@ -242,11 +251,13 @@ fn send_updates(src_path: &Path, content_type: ContentType) -> io::Result<()> {
     inotify.add_watch(src_path, mask)?;
     let mut buffer = [0; 1024];
     loop {
+        info!("Checking for updates in source");
         let html = match content_type {
             ContentType::Html => read_markdown_as_html(src_path)?,
             ContentType::Plain => fs::read_to_string(src_path)?,
         };
         if Some(&html) != last_html.as_ref() {
+            info!("Generated HTML changed, sending update");
             last_html = Some(html.clone());
             let message = HostMessage::ReplaceAll { content: html };
             write_message(&message, &mut stdout().lock())?;
@@ -272,6 +283,13 @@ fn send_updates(src_path: &Path, content_type: ContentType) -> io::Result<()> {
 }
 
 fn main() -> io::Result<()> {
+    WriteLogger::init(
+        LevelFilter::Trace,
+        simplelog::Config::default(),
+        File::create("/tmp/native-host-log")?,
+    )
+    .unwrap();
+
     let (sender, receiver) = channel::<io::Result<()>>();
 
     let tmp_dir = TempDir::new("mail")?;
@@ -284,9 +302,11 @@ fn main() -> io::Result<()> {
 
     let result = receiver.recv().unwrap();
     if let Err(err) = result {
-        eprintln!("{err}");
+        error!("{err}");
+        error!("{}", err.kind());
     }
 
     disconnect(&mut stdout().lock())?;
+    info!("Exiting");
     Ok(())
 }
