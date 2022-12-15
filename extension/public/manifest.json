@@ -3,10 +3,9 @@
   "name": "Vim Compose",
   "description": "Compose email with vim",
   "version": "0.0.1",
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxHW+LGAt9lZqtX//i4fQ32WNYkIGKaiHahIC8My1WOEoJ5k0FEsyJjk2KmWBGb4q26HnLPlKD8FUw89CmHvTyzEGIZZvG/Bh+v8d2qE4/BY2AOXhBMlWbk5eWCdgPETJKko/JjbyP4jti7Js7wGlwW5vQ8W4pz2rJoMjWWis8Ck0pzgrjUolskahazNiDj+W8361OPp0MeUC6vExiDYKZDdmnxpUiBFJk14M8cPTadWkU57qNCA31+nQLId2F8R/U4vzuuKVGUFi2Xkvwf7HZwpJw2XD0d1C0wbvUxF/nKL4hYIzEjplOVf0N9EyKkobVYeE65LHxUNlMc3NDx0ebwIDAQAB",
   "browser_specific_settings": {
     "gecko": {
-			"id": "{ee2bb3f2-4644-4059-807e-46fda31901c4}"
+      "id": "{ee2bb3f2-4644-4059-807e-46fda31901c4}"
     }
   },
   "icons": {
