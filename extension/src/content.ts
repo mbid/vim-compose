@@ -343,6 +343,9 @@ async function tryEdit(el: Element | null) {
   }
 
   if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+    if (el.disabled || el.readOnly) {
+      return;
+    }
     await CancellablePromise.race([
       edit(el),
       pollUntil(() => !el.isConnected),
