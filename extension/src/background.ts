@@ -6,7 +6,7 @@ function inject(tab: Tab | null) {
     return;
   }
   chrome.scripting.executeScript({
-    target: { tabId: tab.id },
+    target: { tabId: tab.id, allFrames: true },
     files: ["content.js"],
   });
 }
