@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Vim Compose",
   "description": "Compose email with vim",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "browser_specific_settings": {
     "gecko": {
       "id": "{a2114633-87c6-47b8-871d-964df3c854df}"
