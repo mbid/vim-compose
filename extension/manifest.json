@@ -30,8 +30,17 @@
   },
   "commands": {
     "_execute_action": {
-      "suggested_key": {
-        "default": "Ctrl+Space"
+      "browser_specific_settings": {
+        "gecko": {
+          "suggested_key": {
+            "default": "Ctrl+Space"
+          }
+        },
+        "chrome": {
+          "suggested_key": {
+            "default": "Ctrl+Shift+E"
+          }
+        }
       },
       "description": "Edit in vim"
     }

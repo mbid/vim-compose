@@ -17,7 +17,7 @@ cd vim-compose
 
 ## Usage
 
-When you've focused a field that accepts text input, hit Ctrl-Space or click the Vim Compose extension button in the toolbar.
+When you've focused a field that accepts text input, hit Ctrl-Space (firefox), Ctrl-Shift-E (chrome) or click the Vim Compose extension button in the toolbar.
 This opens a new terminal running vim.
 Whenver you save in vim, the contents of the file you're editing are copied to the browser.
 Once you're done editing, [exit vim](https://stackoverflow.com/questions/11828270/how-do-i-exit-vim).
