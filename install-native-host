@@ -10,6 +10,22 @@ if ! which pandoc > /dev/null; then
   exit 1
 fi
 
+if ! which cargo > /dev/null; then
+  echo "Error: \"rust\" is not installed"
+  exit 1
+fi
+
+if ! which gnome-terminal > /dev/null; then
+  echo "Error: \"gnome-terminal\" is not installed"
+  exit 1
+fi
+
+if ! which vim > /dev/null; then
+  echo "Error: \"vim\" is not installed"
+  exit 1
+fi
+
+
 if ! cargo build --release; then
   echo "Error: Native host failed to compile" 2>&1
   exit 1
