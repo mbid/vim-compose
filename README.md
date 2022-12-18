@@ -5,7 +5,7 @@ Compose mail and other text on the web as markdown in vim.
 
 ## Installation
 
-Vim Compose currently supports [chrome](https://chrome.google.com/webstore/detail/vim-compose/lafooengjljmipillledmadfcpannkbc) and [firefox nightly](https://github.com/mbid/vim-compose) on linux.
+Vim Compose currently supports [chrome](https://chrome.google.com/webstore/detail/vim-compose/lafooengjljmipillledmadfcpannkbc) and [firefox nightly](https://addons.mozilla.org/de/firefox/addon/vim-compose/) on Linux.
 In addition to the browser extension, you need to install a native host app.
 First, make sure to install all dependencies: `vim`, `gnome-terminal`, `pandoc` and the [rust toolchain](https://rustup.rs/).
 Now run the following to download and install the native host app:
