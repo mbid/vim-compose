@@ -1,15 +1,10 @@
 {
   "name": "extension",
-  "version": "1.0.0",
-  "description": "",
   "main": "background.js",
   "scripts": {
     "build-gecko": "webpack --config webpack/webpack.config.js --mode production --env browser=gecko",
     "build-chrome": "webpack --config webpack/webpack.config.js --mode production --env browser=chrome"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@types/chrome": "^0.0.204",
     "copy-webpack-plugin": "^11.0.0",
