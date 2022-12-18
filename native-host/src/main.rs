@@ -9,8 +9,7 @@ use serde::{Deserialize, Serialize};
 use simplelog::{LevelFilter, WriteLogger};
 use std::cell::Cell;
 use std::fs;
-use std::fs::File;
-use std::io::{self, stdin, stdout, Read, Write};
+use std::io::{self, stderr, stdin, stdout, Read, Write};
 use std::marker::Send;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
@@ -284,9 +283,12 @@ fn send_updates(src_path: &Path, content_type: ContentType) -> io::Result<()> {
 
 fn main() -> io::Result<()> {
     WriteLogger::init(
-        LevelFilter::Trace,
+        LevelFilter::Warn,
         simplelog::Config::default(),
-        File::create("/tmp/native-host-log")?,
+        // Change to
+        //    File::create("/tmp/native-host-log")?,
+        // and adjust the level filter for debugging on firefox.
+        stderr(),
     )
     .unwrap();
 
