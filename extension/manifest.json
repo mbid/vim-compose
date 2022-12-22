@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Vim Compose",
   "description": "Compose mail and other text on the web as markdown in vim.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "browser_specific_settings": {
     "gecko": {
       "id": "{a2114633-87c6-47b8-871d-964df3c854df}"
