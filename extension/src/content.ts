@@ -318,8 +318,53 @@ function disableInput(
   );
 }
 
+function createErrorBanner(): HTMLElement {
+  const container = document.createElement("div");
+  const shadowRoot = container.attachShadow({ mode: "open" });
+
+  shadowRoot.innerHTML = `
+    <style>
+      :host {
+        all: initial;
+
+        display: block;
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 999999;
+        width: 100%;
+      }
+
+      #error {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5em;
+
+        color: rgb(255, 255, 255);
+        background-color: rgb(220, 53, 69);
+        font-size: 1em;
+      }
+    </style>
+    <div id="error">
+      <b>Vim Compose: Cannot edit selection</b>
+    </div>
+  `;
+  return container;
+}
+
+function displayError() {
+  const errorBanner = createErrorBanner();
+  document.body.prepend(errorBanner);
+  setTimeout(() => {
+    errorBanner.remove();
+  }, 5000);
+}
+
 async function tryEdit(el: Element | null) {
   if (!(el instanceof HTMLElement)) {
+    displayError();
     return;
   }
 
@@ -344,6 +389,7 @@ async function tryEdit(el: Element | null) {
 
   if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
     if (el.disabled || el.readOnly) {
+      displayError();
       return;
     }
     await CancellablePromise.race([
@@ -353,6 +399,8 @@ async function tryEdit(el: Element | null) {
     ]);
     return;
   }
+
+  displayError();
 }
 
 tryEdit(document.activeElement);
