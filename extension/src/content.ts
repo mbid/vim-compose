@@ -1,5 +1,19 @@
 import * as protocol from "./protocol";
 
+/// An error indicating that communcation with the native host could not be established.
+class MissingNativeHostError extends Error {
+  constructor() {
+    super("Missing native host");
+  }
+}
+
+/// An error indicating that an element is not suitable for editing.
+class NonEditableElementError extends Error {
+  constructor() {
+    super("Element cannot be edited");
+  }
+}
+
 function flatten(el: Element) {
   if (!el.parentElement) {
     return;
@@ -219,6 +233,7 @@ function pollUntil(property: () => boolean): CancellablePromise<void> {
 
 function edit(editable: HTMLElement): CancellablePromise<void> {
   var port: Port | null;
+  var hostSentMessage = false;
   return new CancellablePromise<void>(
     (resolve, reject) => {
       port = protocol.connect();
@@ -235,7 +250,7 @@ function edit(editable: HTMLElement): CancellablePromise<void> {
         contentType = protocol.ContentType.Html;
         initialContent = editable.innerHTML;
       } else {
-        reject("Invalid edit element");
+        reject(new NonEditableElementError());
         return;
       }
 
@@ -247,10 +262,16 @@ function edit(editable: HTMLElement): CancellablePromise<void> {
       port.postMessage(beginMessage);
 
       port.onDisconnect.addListener(() => {
-        resolve();
+        if (!hostSentMessage) {
+          reject(new MissingNativeHostError());
+        } else {
+          resolve();
+        }
       });
 
       port.onMessage.addListener((message) => {
+        hostSentMessage = true;
+
         if (!protocol.Host.validate(message)) {
           reject("Invalid message");
           return;
@@ -318,54 +339,9 @@ function disableInput(
   );
 }
 
-function createErrorBanner(): HTMLElement {
-  const container = document.createElement("div");
-  const shadowRoot = container.attachShadow({ mode: "open" });
-
-  shadowRoot.innerHTML = `
-    <style>
-      :host {
-        all: initial;
-
-        display: block;
-        position: fixed;
-        left: 0;
-        top: 0;
-        z-index: 999999;
-        width: 100%;
-      }
-
-      #error {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        padding: 0.5em;
-
-        color: rgb(255, 255, 255);
-        background-color: rgb(220, 53, 69);
-        font-size: 1em;
-      }
-    </style>
-    <div id="error">
-      <b>Vim Compose: Cannot edit selection</b>
-    </div>
-  `;
-  return container;
-}
-
-function displayError() {
-  const errorBanner = createErrorBanner();
-  document.body.prepend(errorBanner);
-  setTimeout(() => {
-    errorBanner.remove();
-  }, 5000);
-}
-
 async function tryEdit(el: Element | null) {
   if (!(el instanceof HTMLElement)) {
-    displayError();
-    return;
+    throw new NonEditableElementError();
   }
 
   if (el.isContentEditable === true) {
@@ -389,8 +365,7 @@ async function tryEdit(el: Element | null) {
 
   if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
     if (el.disabled || el.readOnly) {
-      displayError();
-      return;
+      throw new NonEditableElementError();
     }
     await CancellablePromise.race([
       edit(el),
@@ -400,7 +375,84 @@ async function tryEdit(el: Element | null) {
     return;
   }
 
-  displayError();
+  throw new NonEditableElementError();
 }
 
-tryEdit(document.activeElement);
+const errorBannerId = "vim-compose-error-banner-iepe2iPh1atoh6phai2y";
+
+function removeErrorBanner() {
+  const errorBanner = document.getElementById(errorBannerId);
+  if (errorBanner) {
+    errorBanner.remove();
+  }
+}
+
+function createErrorBanner(message: string): HTMLElement {
+  const container = document.createElement("div");
+  container.id = errorBannerId;
+  const shadowRoot = container.attachShadow({ mode: "open" });
+
+  shadowRoot.innerHTML = `
+    <style>
+      :host {
+        all: initial;
+
+        display: block;
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 999999;
+        width: 100%;
+      }
+
+      #error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5em;
+
+        color: rgb(255, 255, 255);
+        background-color: rgb(220, 53, 69);
+        font-size: 1em;
+      }
+
+      #error a {
+        color: yellow;
+      }
+    </style>
+    <div id="error">
+      ${message}
+    </div>
+  `;
+  return container;
+}
+
+function displayError(message: string) {
+  const errorBanner = createErrorBanner(message);
+  document.body.prepend(errorBanner);
+  setTimeout(() => {
+    errorBanner.remove();
+  }, 10000);
+}
+
+(async function () {
+  removeErrorBanner();
+  try {
+    await tryEdit(document.activeElement);
+  } catch (e) {
+    if (e instanceof MissingNativeHostError) {
+      displayError(`
+        <b>Vim Compose: Native host is not installed</b>
+        <div>
+          Follow instructions at
+          <a href="https://github.com/mbid/vim-compose">https://github.com/mbid/vim-compose</a>
+        </div>
+      `);
+    } else if (e instanceof NonEditableElementError) {
+      displayError(`
+        <b>Vim Compose: Element cannot be edited</b>
+      `);
+    }
+  }
+})();
