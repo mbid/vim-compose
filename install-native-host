@@ -42,11 +42,12 @@ manifest_content_chrome="$(cat "$manifest_name.chrome" | sed s/PATH/$escaped_bin
 
 chromium_config="$HOME/.config/chromium"
 google_chrome_config="$HOME/.config/google-chrome"
+brave_config="$HOME/.config/BraveSoftware/Brave-Browser"
 firefox_config="$HOME/.mozilla"
 
-if ! [ -d "$chromium_config" ] & ! [ -d "$google_chrome_config" ] & ! [ -d "$firefox_config" ]; then
-  echo "Error: Could not find google-chrome or chromium profile" 2>&1
-  echo "None of \"$chromium_config\", \"$google_chrome_config\" or \"$firefox_config\" exist" 2>&1
+if ! [ -d "$chromium_config" ] & ! [ -d "$google_chrome_config" ] & ! [ -d "$brave_config" ] & ! [ -d "$firefox_config" ]; then
+  echo "Error: Could not find google-chrome or chromium or brave profile" 2>&1
+  echo "None of \"$chromium_config\", \"$google_chrome_config\" or \"$brave_config\" or \"$firefox_config\" exist" 2>&1
   exit 1
 fi
 
@@ -67,6 +68,9 @@ if [ -d "$chromium_config" ]; then
 fi
 if [ -d "$chrome_config" ]; then
 	install_manifest "$manifest_content_chrome" "$google_chrome_config/NativeMessagingHosts"
+fi
+if [ -d "$brave_config" ]; then
+	install_manifest "$manifest_content_chrome" "$brave_config/NativeMessagingHosts"
 fi
 if [ -d "$firefox_config" ]; then
 	install_manifest "$manifest_content_gecko" "$firefox_config/native-messaging-hosts"
